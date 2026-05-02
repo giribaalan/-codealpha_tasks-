@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Language Translation Tool with TTS</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .translation-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .language-controls {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .language-select {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .language-select label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .swap-btn {
+            display: flex;
+            align-items: flex-end;
+            margin-bottom: 8px;
+        }
+
+        .swap-btn button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.3s;
+        }
+
+        .swap-btn button:hover {
+            background: #764ba2;
+            transform: scale(1.05);
+        }
+
+        .text-areas {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .text-box {
+            position: relative;
+        }
+
+        .text-box label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 200px;
+            font-family: inherit;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #48bb78;
+        }
+
+        .btn-secondary:hover {
+            background: #38a169;
+        }
+
+        .copy-btn {
+            background: #4299e1;
+        }
+
+        .copy-btn:hover {
+            background: #3182ce;
+        }
+
+        .speak-btn {
+            background: #ed8936;
+        }
+
+        .speak-btn:hover {
+            background: #dd6b20;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: #fed7d7;
+            color: #c53030;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .text-areas {
+                grid-template-columns: 1fr;
+            }
+            
+            .language-controls {
+                flex-direction: column;
+            }
+            
+            .swap-btn {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌐 Language Translation Tool</h1>
+            <p>Translate text between 100+ languages instantly</p>
+        </div>
+
+        <div class="translation-card">
+            <div class="language-controls">
+                <div class="language-select">
+                    <label>Source Language</label>
+                    <select id="sourceLang">
+                        <option value="auto">Detect Language</option>
+                        <option value="en">English</option>
+                        <option value="es">Spanish</option>
+                        <option value="fr">French</option>
+                        <option value="de">German</option>
+                        <option value="it">Italian</option>
+                        <option value="pt">Portuguese</option>
+                        <option value="ru">Russian</option>
+                        <option value="zh">Chinese (Simplified)</option>
+                        <option value="ja">Japanese</option>
+                        <option value="ko">Korean</option>
+                        <option value="ar">Arabic</option>
+                        <option value="hi">Hindi</option>
+                    </select>
+                </div>
+
+                <div class="swap-btn">
+                    <button id="swapBtn" title="Swap Languages">⇄</button>
+                </div>
+
+                <div class="language-select">
+                    <label>Target Language</label>
+                    <select id="targetLang">
+                        <option value="es">Spanish</option>
+                        <option value="en">English</option>
+                        <option value="fr">French</option>
+                        <option value="de">German</option>
+                        <option value="it">Italian</option>
+                        <option value="pt">Portuguese</option>
+                        <option value="ru">Russian</option>
+                        <option value="zh">Chinese (Simplified)</option>
+                        <option value="ja">Japanese</option>
+                        <option value="ko">Korean</option>
+                        <option value="ar">Arabic</option>
+                        <option value="hi">Hindi</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="text-areas">
+                <div class="text-box">
+                    <label>Original Text</label>
+                    <textarea id="sourceText" placeholder="Enter text to translate...">A well-structured paragraph serves as the fundamental building block of writing, focusing on a single, cohesive idea. It typically begins with a topic sentence that introduces the main point, followed by supporting sentences that provide evidence, examples, or analysis. Finally, a concluding sentence often wraps up the thought, ensuring that all sentences remain unified and relevant to the topic.</textarea>
+                    <div class="button-group">
+                        <button class="btn btn-secondary" id="clearBtn">🗑️ Clear</button>
+                    </div>
+                </div>
+
+                <div class="text-box">
+                    <label>Translated Text</label>
+                    <textarea id="targetText" placeholder="Translation will appear here..." readonly></textarea>
+                    <div class="button-group">
+                        <button class="btn copy-btn" id="copyBtn">📋 Copy</button>
+                        <button class="btn speak-btn" id="speakBtn">🔊 Text to Speech</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Translating...</p>
+            </div>
+
+            <div class="error-message" id="errorMsg"></div>
+        </div>
+    </div>
+
+    <script>
+        // DOM elements
+        const sourceText = document.getElementById('sourceText');
+        const targetText = document.getElementById('targetText');
+        const sourceLang = document.getElementById('sourceLang');
+        const targetLang = document.getElementById('targetLang');
+        const swapBtn = document.getElementById('swapBtn');
+        const copyBtn = document.getElementById('copyBtn');
+        const speakBtn = document.getElementById('speakBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const loading = document.getElementById('loading');
+        const errorMsg = document.getElementById('errorMsg');
+        
+        let debounceTimer;
+
+        // Function to show error
+        function showError(message) {
+            errorMsg.textContent = message;
+            errorMsg.style.display = 'block';
+            setTimeout(() => {
+                errorMsg.style.display = 'none';
+            }, 3000);
+        }
+
+        // Function to hide loading
+        function hideLoading() {
+            loading.style.display = 'none';
+        }
+
+        // Function to show loading
+        function showLoading() {
+            loading.style.display = 'block';
+        }
+
+        // Translation function using Google Translate API
+        async function translate() {
+            const text = sourceText.value.trim();
+            
+            if (!text) {
+                targetText.value = '';
+                return;
+            }
+            
+            const source = sourceLang.value;
+            const target = targetLang.value;
+            
+            showLoading();
+            
+            try {
+                // Using Google Translate API (free, no key needed)
+                const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${source}&tl=${target}&dt=t&q=${encodeURIComponent(text)}`;
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                let translatedText = '';
+                for (const part of data[0]) {
+                    if (part[0]) {
+                        translatedText += part[0];
+                    }
+                }
+                
+                targetText.value = translatedText;
+            } catch (error) {
+                console.error('Error:', error);
+                showError('Translation failed. Please try again.');
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        // Debounced translation
+        function debouncedTranslate() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(translate, 500);
+        }
+        
+        // Swap languages
+        function swapLanguages() {
+            const tempLang = sourceLang.value;
+            sourceLang.value = targetLang.value;
+            targetLang.value = tempLang;
+            
+            const tempText = sourceText.value;
+            if (targetText.value) {
+                sourceText.value = targetText.value;
+                targetText.value = '';
+                translate();
+            } else if (tempText) {
+                translate();
+            }
+        }
+        
+        // Copy to clipboard
+        async function copyTranslation() {
+            if (!targetText.value) {
+                showError('Nothing to copy!');
+                return;
+            }
+            
+            try {
+                await navigator.clipboard.writeText(targetText.value);
+                const originalText = copyBtn.innerHTML;
+                copyBtn.innerHTML = '✅ Copied!';
+                setTimeout(() => {
+                    copyBtn.innerHTML = originalText;
+                }, 2000);
+            } catch (err) {
+                showError('Failed to copy text');
+            }
+        }
+        
+        // ============================================
+        // TEXT TO SPEECH FUNCTION - FIXED VERSION
+        // ============================================
+        function textToSpeech() {
+            // Get the translated text
+            const text = targetText.value.trim();
+            
+            // Check if there's text to speak
+            if (!text) {
+                showError("No translated text to speak! Please translate something first.");
+                return false;
+            }
+            
+            // Check if browser supports speech synthesis
+            if (!window.speechSynthesis) {
+                showError("Your browser doesn't support text-to-speech. Please use Chrome, Edge, or Safari.");
+                return false;
+            }
+            
+            try {
+                // Cancel any ongoing speech to prevent conflicts
+                window.speechSynthesis.cancel();
+                
+                // Create a new speech utterance
+                const utterance = new SpeechSynthesisUtterance(text);
+                
+                // Get the target language code for proper pronunciation
+                const targetLangCode = targetLang.value;
+                
+                // Map language codes to speech synthesis language codes
+                const languageMap = {
+                    'en': 'en-US',      // English (US)
+                    'es': 'es-ES',      // Spanish (Spain)
+                    'fr': 'fr-FR',      // French
+                    'de': 'de-DE',      // German
+                    'it': 'it-IT',      // Italian
+                    'pt': 'pt-PT',      // Portuguese
+                    'ru': 'ru-RU',      // Russian
+                    'zh': 'zh-CN',      // Chinese (Simplified)
+                    'ja': 'ja-JP',      // Japanese
+                    'ko': 'ko-KR',      // Korean
+                    'ar': 'ar-SA',      // Arabic
+                    'hi': 'hi-IN'       // Hindi
+                };
+                
+                utterance.lang = languageMap[targetLangCode] || 'en-US';
+                
+                // Optional: Adjust speech properties
+                utterance.rate = 1.0;      // Speed (0.1 to 10, 1 is normal)
+                utterance.pitch = 1.0;     // Pitch (0 to 2, 1 is normal)
+                utterance.volume = 1.0;    // Volume (0 to 1)
+                
+                // Add visual feedback while speaking
+                speakBtn.style.opacity = "0.7";
+                speakBtn.style.transform = "scale(0.98)";
+                
+                // Event handlers for feedback
+                utterance.onstart = () => {
+                    console.log("Text-to-speech started");
+                };
+                
+                utterance.onend = () => {
+                    console.log("Text-to-speech ended");
+                    // Reset button style
+                    speakBtn.style.opacity = "1";
+                    speakBtn.style.transform = "scale(1)";
+                };
+                
+                utterance.onerror = (event) => {
+                    console.error("Speech error:", event);
+                    showError("Failed to speak. Please try again.");
+                    speakBtn.style.opacity = "1";
+                    speakBtn.style.transform = "scale(1)";
+                };
+                
+                // Start speaking
+                window.speechSynthesis.speak(utterance);
+                
+                return true;
+                
+            } catch (error) {
+                console.error("TTS Error:", error);
+                showError("Text-to-speech failed: " + error.message);
+                speakBtn.style.opacity = "1";
+                speakBtn.style.transform = "scale(1)";
+                return false;
+            }
+        }
+        
+        // Clear text
+        function clearText() {
+            sourceText.value = '';
+            targetText.value = '';
+            sourceText.focus();
+        }
+        
+        // Event listeners
+        sourceText.addEventListener('input', debouncedTranslate);
+        sourceLang.addEventListener('change', translate);
+        targetLang.addEventListener('change', translate);
+        swapBtn.addEventListener('click', swapLanguages);
+        copyBtn.addEventListener('click', copyTranslation);
+        speakBtn.addEventListener('click', textToSpeech);  // TTS button connected!
+        clearBtn.addEventListener('click', clearText);
+        
+        // Auto-translate when page loads
+        window.addEventListener('load', () => {
+            translate();
+        });
+        
+        // Also try to speak on page load? No, wait for user interaction
+        console.log("Ready! Click the 'Text to Speech' button to hear the translation.");
+    </script>
+</body>
+</html>
